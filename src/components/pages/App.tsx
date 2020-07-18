@@ -36,11 +36,13 @@ const onwheel = async(e) => {
         flag = true;
         await sleep(550);
         flag = false;
+        e.preventDefault();
     } else if (e.deltaX < -100) {
         direction = 39;
         flag = true;
         await sleep(550);
         flag = false;
+        e.preventDefault();
     }
 }
 
