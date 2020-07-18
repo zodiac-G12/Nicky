@@ -1,0 +1,103 @@
+		:import React, {useState, useCallback} from 'react';
+import styled, {keyframes} from 'styled-components';
+import marked from 'marked';
+import UseEventListener from '../atoms/UseEventListener';
+import Container from '../atoms/Container';
+
+const onkeydown = (e) => {
+    const keyCode = e.keyCode;
+    // 37: left, 39: right
+    if (![37,39].includes(keyCode)) return;
+    console.log(e);
+}
+
+let flag = false,
+    direction = 0;
+
+const onwheel = (e) => {
+    if (flag && (-20 <= e.deltaX && e.deltaX <= 20)) {
+        flag = false;
+    } else if (flag) {
+        return;
+    }
+    if (e.deltaX > 100) {
+        direction = 37;
+        flag = true;
+    } else if (e.deltaX < -100) {
+        direction = 39;
+        flag = true;
+    }
+    // e.preventDefault();
+}
+
+const App = () => {
+    const content = marked("# Test", {sanitize: true});
+    const [flags, sf] = useState(false);
+    const [directions, sd] = useState(0);
+    // useEffect(() => {
+    //     console.log("ue")
+    //     sf(flag);
+    //     sd(direction);
+    // })
+
+    const handler = useCallback((e) => {
+        onwheel(e);
+        sf(flag);
+        sd(direction);
+    }, []);
+
+    UseEventListener('wheel', handler);
+
+    return (
+        <Container 
+            onTouchStart={(e)=>{console.log(e)}}
+            onTouchEnd={(e)=>{console.log(e)}}
+            onMouseDown={(e)=>{console.log(e)}}
+            onMouseUp={(e)=>{console.log(e)}}>
+            <Md
+                flag={flags}
+                direction={directions}
+                id="central"
+                dangerouslySetInnerHTML={{__html: content}}>
+            </Md>
+        </Container>
+    );
+};
+
+window.addEventListener('keydown', onkeydown);
+// window.addEventListener('wheel', onwheel);
+
+const leftshift = keyframes`
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-100vw);
+    }
+`;
+const rightshift = keyframes`
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(100vw);
+    }
+`;
+
+const Md = styled.div`
+    width: 100%;
+    height: 100%;
+    animation: ${props => {
+        console.log(props)
+        if (!props.flag) return "none";
+
+        if (props.direction === 37) {
+            return `${leftshift} 1s ease-out forwards`;
+        } else if(props.direction === 39) {
+            return `${rightshift} 1s ease-out forwards`;
+        } else return "none";
+    }};
+`;
+
+
+export default App;
