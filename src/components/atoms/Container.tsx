@@ -1,9 +1,11 @@
 import styled from 'styled-components';
 
 const Container = styled.div`
-    width: calc(100vw - 10vh);
+    width: 100vw;//calc(100vw - 10vh);
+    overflow: hidden;
     height: 90vh;
-    padding: 5vh;
+    // padding: 5vh;
+    display: flex;
     // background: black;
     // color: orange;
 `;

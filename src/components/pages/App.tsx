@@ -8,7 +8,8 @@ const sleep = (n) => new Promise(resolve => setTimeout(resolve, n));
 
 
 let flag = false,
-    direction = 0;
+    direction = 0,
+    indexX;
 
 const onkeydown = async(e) => {
     console.log("onkeydown", e);
@@ -32,19 +33,18 @@ const onwheel = async(e) => {
     if (flag) return;
 
     if (e.deltaX > 100) {
-        direction = 37;
+        direction = 39;
         flag = true;
         await sleep(550);
         flag = false;
     } else if (e.deltaX < -100) {
-        direction = 39;
+        direction = 37;
         flag = true;
         await sleep(550);
         flag = false;
     }
 }
 
-let indexX;
 
 const ontouchstart = async(e) => {
     if (flag) return;
@@ -60,13 +60,13 @@ const ontouchend = async(e) => {
     const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
 
     if (indexX < clientX && clientX - indexX > 100) {
-        direction = 39;
+        direction = 37;
         flag = true;
         await sleep(550);
         flag = false;
         indexX = undefined;
     } else if (indexX > clientX && indexX - clientX > 100) {
-        direction = 37;
+        direction = 39;
         flag = true;
         await sleep(550);
         flag = false;
@@ -79,7 +79,10 @@ const ontouchend = async(e) => {
 }
 
 const App = () => {
-    const content = marked("# Test");
+    const content1 = marked("# left");
+    const content3 = marked("# right");
+
+    const [centerContent, setContent] = useState(marked("# center"));
     const [flags, sf] = useState(false);
     const [directions, sd] = useState(0);
 
@@ -90,56 +93,53 @@ const App = () => {
         sf(flag);
         sd(direction);
     }, []);
-    const handlerT = useCallback(async(e) => {
-        console.log("handlerT")
-        ontouchend(e);
+    const handler = useCallback(async(e,fnc) => {
+        console.log(String(fnc.name))
+        fnc(e);
 
         sf(flag);
         sd(direction);
 
         if (flag) await sleep(600);
 
-        sf(flag);
-        sd(direction);
-    }, []);
-    const handlerK = useCallback(async(e) => {
-        console.log("handlerK")
-        onkeydown(e);
-
-        sf(flag);
-        sd(direction);
-
-        if (flag) await sleep(600);
-
-        sf(flag);
-        sd(direction);
-    }, []);
-    const handlerW = useCallback(async(e) => {
-        console.log("handlerW")
-        onwheel(e);
-
-        sf(flag);
-        sd(direction);
-
-        if (flag) await sleep(600);
-
+        if (direction===37) setContent(content1);
+        if (direction===39) setContent(content3);
         sf(flag);
         sd(direction);
     }, []);
 
-    UseEventListener('wheel', handlerW);
-    UseEventListener('keydown', handlerK);
+    [{evName: "wheel", fuc: onwheel},
+        {evName: "keydown", fuc: onkeydown},
+        {evName: "touchend", fuc: ontouchend},
+        {evName: "mouseup", fuc: ontouchend}].forEach((item) => {
+        UseEventListener(item.evName, (e)=>{handler(e,item.fuc)});
+    })
+
     UseEventListener('touchstart', handlerTS);
-    UseEventListener('touchend', handlerT);
-    UseEventListener('mouseup', handlerT);
     UseEventListener('mousedown', handlerTS);
 
     return (
         <Container> 
             <Md
+                left={"0"}
+                time={"0.5s"}
                 flag={flags}
                 direction={directions}
-                dangerouslySetInnerHTML={{__html: content}}>
+                dangerouslySetInnerHTML={{__html: centerContent}}>
+            </Md>
+            <Md
+                left={"-100vw"}
+                time={"0.5s"}
+                flag={flags}
+                direction={directions}
+                dangerouslySetInnerHTML={{__html: content1}}>
+            </Md>
+            <Md
+                left={"100vw"}
+                time={"0.5s"}
+                flag={flags}
+                direction={directions}
+                dangerouslySetInnerHTML={{__html: content3}}>
             </Md>
         </Container>
     );
@@ -163,17 +163,21 @@ const rightshift = keyframes`
 `;
 
 const Md = styled.div`
-    width: 100%;
-    height: 100%;
+    left: ${props=>{return props.left}};
+    overflow: hidden;
+    width: 90vw;
+    position: absolute;
+    margin: 5vw;
+    height: 80vh;
     background: red;
     animation: ${props => {
         if (!props.flag) return "none";
         if (props.direction === 37) {
-            return leftshift;
-        } else if(props.direction === 39) {
             return rightshift;
+        } else if(props.direction === 39) {
+            return leftshift;
         } else return "none";
-    }} 0.5s ease-out forwards;
+    }} ${props=>{return props.time}} ease forwards;
 `;
 
 
